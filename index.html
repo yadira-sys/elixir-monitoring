@@ -1,0 +1,1844 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ELIXIR - Marketing Musical Dashboard</title>
+  
+  <!-- Estilos -->
+  <link rel="stylesheet" href="css/style.css">
+  
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  
+  <!-- SheetJS para leer Excel -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  
+  <!-- Papa Parse para CSV -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <div class="header-content">
+      <div class="logo">
+        <span class="logo-icon">🎵</span>
+        <h1>ELIXIR</h1>
+      </div>
+      <div class="header-actions">
+        <button class="btn-header" id="btnUpdateSpotify">
+          🔄 Actualizar Spotify
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Alert Container -->
+  <div id="alertContainer" style="position: fixed; top: 80px; right: 20px; z-index: 9999; max-width: 400px;"></div>
+
+  <!-- Main Container -->
+  <div class="container">
+    <!-- Tabs Navigation -->
+    <nav class="tabs">
+      <button class="tab-btn active" data-tab="dashboard">📊 Dashboard</button>
+      <button class="tab-btn" data-tab="data">📁 Datos</button>
+      <button class="tab-btn" data-tab="reports">📄 Reportes</button>
+      <button class="tab-btn" data-tab="artists">🎤 Artistas</button>
+      <button class="tab-btn" data-tab="snapshots">📸 Snapshots</button>
+    </nav>
+
+    <!-- Tab: Dashboard -->
+    <div id="dashboardTab" class="tab-content active">
+      <!-- KPIs -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-icon">💰</div>
+          <div class="kpi-label">Gasto Total</div>
+          <div class="kpi-value" id="kpiSpent">€0.00</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon">👥</div>
+          <div class="kpi-label">Followers Ganados</div>
+          <div class="kpi-value" id="kpiFollowers">+0</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon">💵</div>
+          <div class="kpi-label">€ por Follower</div>
+          <div class="kpi-value" id="kpiCPF">€0.00</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon">📈</div>
+          <div class="kpi-label">Alcance Total</div>
+          <div class="kpi-value" id="kpiReach">0</div>
+        </div>
+      </div>
+
+      <!-- 🚨 ALERTAS PANEL -->
+      <div id="alertsPanel" style="margin-bottom: 1.5rem;">
+        <!-- Alertas se cargan dinámicamente -->
+      </div>
+
+      <!-- Charts Row 1 -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Ranking CPF por Artista</h3>
+          </div>
+          <div class="chart-container">
+            <canvas id="chartCPF"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Distribución de Presupuesto</h3>
+          </div>
+          <div class="chart-container">
+            <canvas id="chartBudget"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Row 2 -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Gasto vs Followers</h3>
+          </div>
+          <div class="chart-container">
+            <canvas id="chartScatter"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Cumplimiento Compromiso</h3>
+          </div>
+          <div class="chart-container">
+            <canvas id="chartCommitment"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- 🏆 RANKING SECTION -->
+      <div class="card" style="margin-bottom: 1.5rem; border: 2px solid #8b5cf6;">
+        <div class="card-header" style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(139, 92, 246, 0.05) 100%);">
+          <h3 class="card-title">🏆 Ranking de Performance</h3>
+        </div>
+        <div id="rankingContainer" style="padding: 1.5rem;">
+          <div style="text-align: center; padding: 2rem; color: var(--gray-300);">
+            Carga datos y actualiza Spotify para ver el ranking
+          </div>
+        </div>
+      </div>
+
+      <!-- 📊 COMPARACIÓN PERIODOS -->
+      <div class="card" style="margin-bottom: 1.5rem; border: 2px solid #3b82f6;">
+        <div class="card-header" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(59, 130, 246, 0.05) 100%);">
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+            <h3 class="card-title">📊 Comparación de Periodos</h3>
+            <button id="btnCompareToggle" class="btn btn-secondary" style="font-size: 0.9rem;">
+              🔄 Activar Comparación
+            </button>
+          </div>
+        </div>
+        <div id="comparisonContainer" style="padding: 1.5rem; display: none;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+            <div>
+              <label style="display: block; margin-bottom: 0.5rem; color: var(--gray-300); font-size: 0.9rem;">
+                📅 Periodo 1 (Anterior)
+              </label>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                <input type="date" id="period1Start" class="form-input" style="font-size: 0.9rem;">
+                <input type="date" id="period1End" class="form-input" style="font-size: 0.9rem;">
+              </div>
+            </div>
+            <div>
+              <label style="display: block; margin-bottom: 0.5rem; color: var(--gray-300); font-size: 0.9rem;">
+                📅 Periodo 2 (Actual)
+              </label>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                <input type="date" id="period2Start" class="form-input" style="font-size: 0.9rem;">
+                <input type="date" id="period2End" class="form-input" style="font-size: 0.9rem;">
+              </div>
+            </div>
+          </div>
+          <button id="btnGenerateComparison" class="btn btn-primary" style="width: 100%; margin-bottom: 1.5rem;">
+            📊 Generar Comparación
+          </button>
+          <div id="comparisonResults">
+            <div style="text-align: center; padding: 2rem; color: var(--gray-300);">
+              Selecciona dos periodos y presiona "Generar Comparación"
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TrackBoost Section -->
+      <div class="card" style="margin-bottom: 1.5rem; border: 2px solid #f59e0b;">
+        <div class="card-header" style="background: rgba(245, 158, 11, 0.1);">
+          <h3 class="card-title">🎯 Campañas TrackBoost</h3>
+        </div>
+        <div style="padding: 1.5rem;">
+          <div id="trackboostKPIs" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+            <div style="background: rgba(245, 158, 11, 0.1); padding: 1rem; border-radius: 8px; text-align: center;">
+              <div style="color: #f59e0b; font-size: 0.85rem; margin-bottom: 0.5rem;">Gasto TRCKBST</div>
+              <div style="color: #f59e0b; font-size: 1.5rem; font-weight: bold;" id="kpiTrackboostSpent">€0.00</div>
+            </div>
+            <div style="background: rgba(245, 158, 11, 0.1); padding: 1rem; border-radius: 8px; text-align: center;">
+              <div style="color: #f59e0b; font-size: 0.85rem; margin-bottom: 0.5rem;">Conversiones TRCKBST</div>
+              <div style="color: #f59e0b; font-size: 1.5rem; font-weight: bold;" id="kpiTrackboostResults">0</div>
+            </div>
+            <div style="background: rgba(245, 158, 11, 0.1); padding: 1rem; border-radius: 8px; text-align: center;">
+              <div style="color: #f59e0b; font-size: 0.85rem; margin-bottom: 0.5rem;">CPF TRCKBST</div>
+              <div style="color: #f59e0b; font-size: 1.5rem; font-weight: bold;" id="kpiTrackboostCPF">€0.00</div>
+            </div>
+          </div>
+          <div style="overflow-x: auto;">
+            <table class="data-table">
+              <thead style="background: rgba(245, 158, 11, 0.2);">
+                <tr>
+                  <th style="color: #f59e0b;">Artista</th>
+                  <th style="color: #f59e0b;">Campaña</th>
+                  <th style="color: #f59e0b;">€ Gastado</th>
+                  <th style="color: #f59e0b;">Conversiones</th>
+                  <th style="color: #f59e0b;">€/Conv</th>
+                  <th style="color: #f59e0b;">Alcance</th>
+                  <th style="color: #f59e0b;">Presupuesto</th>
+                </tr>
+              </thead>
+              <tbody id="trackboostTableBody">
+                <tr>
+                  <td colspan="7" style="text-align: center; padding: 1rem; color: var(--gray-300);">
+                    Carga datos Meta Ads para ver campañas TrackBoost
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Monitoring Table (Completa) -->
+      <div class="card" style="margin-bottom: 1.5rem;">
+        <div class="card-header">
+          <h3 class="card-title">📊 Monitoring Completo (Con Datos Spotify)</h3>
+          <div style="display: flex; align-items: center; gap: 1rem; margin-top: 0.5rem; font-size: 0.9rem;">
+            <label style="color: var(--gray-300);">📅 Snapshot Base:</label>
+            <select id="snapshotBaseSelector" class="btn btn-secondary" style="padding: 0.3rem 0.8rem; min-width: 200px;" onchange="App.changeSnapshotBase()">
+              <option value="31/10/2024">31 Octubre 2024 (baseline histórico)</option>
+              <option value="01/12/2025">01 Diciembre 2025 (estimado)</option>
+              <option value="manual">Crear snapshot manual...</option>
+            </select>
+            <span id="snapshotBaseIndicator" style="color: #10b981; font-weight: 600;">
+              📌 Usando: 31 Octubre 2024 (histórico)
+            </span>
+          </div>
+        </div>
+        <div style="overflow-x: auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Artist</th>
+                <th>€/Follower</th>
+                <th>Increase Followers</th>
+                <th>€ Gastado</th>
+                <th>Conversiones</th>
+                <th>Alcance</th>
+                <th>Followers Inicio</th>
+                <th>Followers Final</th>
+                <th>Acción</th>
+              </tr>
+            </thead>
+            <tbody id="monitoringTableBody">
+              <tr>
+                <td colspan="9" style="text-align: center; padding: 2rem;">
+                  Carga datos y actualiza Spotify para ver monitoring completo
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Data Table -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Detalle de Campañas</h3>
+        </div>
+        <div style="overflow-x: auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Artista</th>
+                <th>Campaña</th>
+                <th>Gasto (€)</th>
+                <th>Followers</th>
+                <th>€/Follower</th>
+                <th>Alcance</th>
+                <th>Followers Spotify</th>
+                <th>Popularidad</th>
+              </tr>
+            </thead>
+            <tbody id="dataTableBody">
+              <tr>
+                <td colspan="8" style="text-align: center; padding: 2rem;">
+                  Carga datos de Meta Ads para ver el detalle
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Datos -->
+    <div id="dataTab" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Subir Datos Meta Ads</h3>
+        </div>
+        <div style="padding: 2rem;">
+          <div class="file-upload-area" id="uploadArea">
+            <div class="upload-icon">📁</div>
+            <div class="upload-text">Arrastra tu archivo CSV aquí</div>
+            <div class="upload-hint">o click para seleccionar</div>
+            <input type="file" id="fileInput" accept=".csv,.xlsx,.xls" style="display: none;">
+          </div>
+          
+          <div style="margin-top: 2rem;">
+            <h4 style="color: var(--elixir-white); margin-bottom: 1rem;">Formato esperado:</h4>
+            <ul style="color: var(--gray-300);">
+              <li>Columnas: Reporting starts, Reporting ends, Campaign name, Results, Cost per results, Amount spent (EUR), Impressions, Reach</li>
+              <li>Formato: CSV o Excel</li>
+              <li>Codificación: UTF-8</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mt-3">
+        <div class="card-header">
+          <h3 class="card-title">Datos de Spotify</h3>
+        </div>
+        <div style="padding: 2rem;">
+          <p style="color: var(--gray-300); margin-bottom: 1rem;">
+            Los datos de Spotify se actualizan automáticamente desde la API.
+            22 playlists configuradas.
+          </p>
+          <button class="btn btn-primary" id="btnUpdateSpotifyData" onclick="App.updateSpotifyData()">
+            🔄 Actualizar Ahora
+          </button>
+          <div id="spotifyStatus" style="margin-top: 1rem; color: var(--gray-300);"></div>
+          
+          <div class="alert alert-info" style="margin-top: 1.5rem;">
+            <strong>📅 Snapshot Automático:</strong> El día 1 de cada mes, la app guarda automáticamente los followers de todos los artistas para generar reports mensuales.
+          </div>
+        </div>
+      </div>
+
+      <div class="card mt-3">
+        <div class="card-header">
+          <h3 class="card-title">📝 Actualizar Datos Manuales</h3>
+        </div>
+        <div style="padding: 2rem;">
+          <p style="color: var(--gray-300); margin-bottom: 1rem;">
+            Oyentes y Seguidores al Perfil deben actualizarse manualmente desde Spotify for Artists.
+          </p>
+          
+          <div class="form-group">
+            <label class="form-label">Artista</label>
+            <select id="manualArtistSelector" class="form-select">
+              <option value="">-- Selecciona artista --</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Oyentes Mensuales</label>
+            <input type="number" id="manualOyentes" class="form-input" placeholder="Ej: 8500">
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Seguidores al Perfil</label>
+            <input type="number" id="manualSeguidores" class="form-input" placeholder="Ej: 2100">
+          </div>
+          
+          <button class="btn btn-primary" onclick="App.saveManualData()">
+            💾 Guardar Datos Manuales
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Reportes -->
+    <div id="reportsTab" class="tab-content">
+      <!-- Report General -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">📊 Report General - Todos los Artistas</h3>
+        </div>
+        <div style="padding: 2rem;">
+          <div class="form-group">
+            <label class="form-label">Fecha Inicio</label>
+            <input type="date" id="reportStartDate" class="form-input" value="2025-11-17">
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Fecha Fin</label>
+            <input type="date" id="reportEndDate" class="form-input" value="2025-12-01">
+          </div>
+          
+          <!-- Selector de Snapshot para Reports -->
+          <div style="margin: 1.5rem 0; padding: 1rem; background: rgba(139, 92, 246, 0.05); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 8px;">
+            <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+              <label style="color: var(--gray-300); font-weight: 600;">📅 Snapshot Base para Reports:</label>
+              <select id="reportSnapshotSelector" class="btn btn-secondary" style="padding: 0.3rem 0.8rem; min-width: 200px;">
+                <option value="31/10/2024">31 Octubre 2024 (baseline histórico)</option>
+                <option value="01/12/2025">01 Diciembre 2025 (estimado)</option>
+              </select>
+              <span id="reportSnapshotIndicator" style="color: #8b5cf6; font-weight: 600; font-size: 0.9rem;">
+                📌 Reports usarán: 31 Octubre 2024 (histórico)
+              </span>
+            </div>
+            <p style="margin-top: 0.5rem; color: var(--gray-400); font-size: 0.85rem;">
+              ℹ️ Este snapshot determina la fecha base para calcular el crecimiento en los reports descargables
+            </p>
+          </div>
+          
+          <div class="flex gap-2" style="flex-wrap: wrap;">
+            <button class="btn btn-primary" onclick="App.generateGeneralReport()">
+              📊 Excel con Formato
+            </button>
+            <button class="btn btn-secondary" onclick="App.generateHTMLReport()">
+              🎨 HTML Visual (Branding Elixir)
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Report Individual por Artista -->
+      <div class="card mt-3">
+        <div class="card-header">
+          <h3 class="card-title">👤 Report Individual por Artista</h3>
+        </div>
+        <div style="padding: 2rem;">
+          <div class="form-group">
+            <label class="form-label">Seleccionar Artista</label>
+            <select id="artistSelector" class="form-select">
+              <option value="">-- Selecciona un artista --</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Fecha Inicio</label>
+            <input type="date" id="artistReportStartDate" class="form-input" value="2025-11-17">
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Fecha Fin</label>
+            <input type="date" id="artistReportEndDate" class="form-input" value="2025-12-01">
+          </div>
+          
+          <button class="btn btn-primary" onclick="App.generateArtistReport()">
+            👤 Generar Report Individual (HTML)
+          </button>
+          
+          <div id="artistReportPreview" style="margin-top: 2rem;"></div>
+        </div>
+      </div>
+
+      <!-- Configuración TrackBoost -->
+      <div class="card mt-3" style="border: 2px solid #f59e0b;">
+        <div class="card-header" style="background: rgba(245, 158, 11, 0.1);">
+          <h3 class="card-title">⚙️ Configurar Tracks TrackBoost</h3>
+        </div>
+        <div style="padding: 2rem;">
+          <p style="color: var(--gray-300); margin-bottom: 1.5rem;">
+            Para obtener saves y popularidad, añade el Track ID de Spotify:
+          </p>
+          
+          <div id="trackboostConfig">
+            <!-- PATO TRCKBST -->
+            <div class="card" style="margin-bottom: 1rem; background: rgba(245, 158, 11, 0.05); padding: 1.5rem;">
+              <h4 style="color: #f59e0b; margin-bottom: 1rem;">PATO PESCIO (TRCKBST Minotaur)</h4>
+              <div class="form-group">
+                <label class="form-label">Track URL Spotify</label>
+                <input type="text" id="trackUrl_pato" class="form-input" 
+                       placeholder="https://open.spotify.com/track/...">
+                <small style="color: var(--gray-300); font-size: 0.85rem; display: block; margin-top: 0.5rem;">
+                  El Track ID se extrae automáticamente de la URL
+                </small>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Nombre del Track</label>
+                <input type="text" id="trackName_pato" class="form-input" value="Minotaur">
+              </div>
+              <div class="form-group">
+                <label class="form-label">💰 Tipo de Presupuesto</label>
+                <select id="budgetType_pato" class="form-input" style="width: auto;">
+                  <option value="lite" selected>Lite (€200)</option>
+                  <option value="normal">Normal (€500)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">💾 Saves Actuales (Manual)</label>
+                <input type="number" id="currentSaves_pato" class="form-input" placeholder="0">
+                <small style="color: var(--gray-300); font-size: 0.85rem; display: block; margin-top: 0.5rem;">
+                  Introduce el número de saves actual del track
+                </small>
+              </div>
+              <div class="form-group">
+                <label class="form-label">📺 Streams (Manual)</label>
+                <input type="number" id="streams_pato" class="form-input" placeholder="0">
+                <small style="color: var(--gray-300); font-size: 0.85rem; display: block; margin-top: 0.5rem;">
+                  Introduce el número de streams del track
+                </small>
+              </div>
+              <!-- NUEVOS CAMPOS PUNTO B -->
+              <div class="form-group">
+                <label class="form-label">💰 Gasto Total Campaña (Manual)</label>
+                <input type="number" id="gastoTotal_pato" class="form-input" placeholder="0" step="0.01">
+                <small style="color: var(--gray-300); font-size: 0.85rem; display: block; margin-top: 0.5rem;">
+                  Gasto total acumulado desde inicio de campaña (€)
+                </small>
+              </div>
+              <div class="form-group">
+                <label class="form-label">📈 Saves Corte Anterior (Manual)</label>
+                <input type="number" id="lastSaves_pato" class="form-input" placeholder="0">
+                <small style="color: var(--gray-300); font-size: 0.85rem; display: block; margin-top: 0.5rem;">
+                  Saves del reporte anterior - Se usa para calcular: (Saves Actuales - Saves Anterior)
+                </small>
+              </div>
+              <button class="btn btn-secondary" onclick="saveTrackConfig('pato', 'PATO PESCIO (TRCKBST Minotaur)')">
+                💾 Guardar Track
+              </button>
+              <div id="trackStatus_pato" style="margin-top: 1rem;"></div>
+            </div>
+            
+            <!-- STBAN TRCKBST -->
+            <div class="card" style="margin-bottom: 1rem; background: rgba(245, 158, 11, 0.05); padding: 1.5rem;">
+              <h4 style="color: #f59e0b; margin-bottom: 1rem;">Steban (TRCKBST Luz)</h4>
+              <div class="form-group">
+                <label class="form-label">Track URL Spotify</label>
+                <input type="text" id="trackUrl_stban" class="form-input" 
+                       placeholder="https://open.spotify.com/track/...">
+                <small style="color: var(--gray-300); font-size: 0.85rem; display: block; margin-top: 0.5rem;">
+                  El Track ID se extrae automáticamente de la URL
+                </small>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Nombre del Track</label>
+                <input type="text" id="trackName_stban" class="form-input" value="Luz">
+              </div>
+              <div class="form-group">
+                <label class="form-label">💰 Tipo de Presupuesto</label>
+                <select id="budgetType_stban" class="form-input" style="width: auto;">
+                  <option value="lite">Lite (€200)</option>
+                  <option value="normal" selected>Normal (€500)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">💾 Saves Actuales (Manual)</label>
+                <input type="number" id="currentSaves_stban" class="form-input" placeholder="0">
+                <small style="color: var(--gray-300); font-size: 0.85rem; display: block; margin-top: 0.5rem;">
+                  Introduce el número de saves actual del track
+                </small>
+              </div>
+              <div class="form-group">
+                <label class="form-label">📺 Streams (Manual)</label>
+                <input type="number" id="streams_stban" class="form-input" placeholder="0">
+                <small style="color: var(--gray-300); font-size: 0.85rem; display: block; margin-top: 0.5rem;">
+                  Introduce el número de streams del track
+                </small>
+              </div>
+              <!-- NUEVOS CAMPOS PUNTO B -->
+              <div class="form-group">
+                <label class="form-label">💰 Gasto Total Campaña (Manual)</label>
+                <input type="number" id="gastoTotal_stban" class="form-input" placeholder="0" step="0.01">
+                <small style="color: var(--gray-300); font-size: 0.85rem; display: block; margin-top: 0.5rem;">
+                  Gasto total acumulado desde inicio de campaña (€)
+                </small>
+              </div>
+              <div class="form-group">
+                <label class="form-label">📈 Saves Corte Anterior (Manual)</label>
+                <input type="number" id="lastSaves_stban" class="form-input" placeholder="0">
+                <small style="color: var(--gray-300); font-size: 0.85rem; display: block; margin-top: 0.5rem;">
+                  Saves del reporte anterior - Se usa para calcular: (Saves Actuales - Saves Anterior)
+                </small>
+              </div>
+              <button class="btn btn-secondary" onclick="saveTrackConfig('stban', 'Steban (TRCKBST Luz)')">
+                💾 Guardar Track
+              </button>
+              <div id="trackStatus_stban" style="margin-top: 1rem;"></div>
+            </div>
+          </div>
+          
+          <button class="btn btn-primary" style="margin-top: 1rem;" onclick="App.updateTrackboostData()">
+            🔄 Actualizar Datos TrackBoost
+          </button>
+        </div>
+      </div>
+      
+      <!-- Report TrackBoost -->
+      <div class="card mt-3" style="border: 2px solid #f59e0b;">
+        <div class="card-header" style="background: rgba(245, 158, 11, 0.1);">
+          <h3 class="card-title">📄 Report TrackBoost</h3>
+        </div>
+        <div style="padding: 2rem;">
+          <button class="btn btn-primary" onclick="App.generateTrackboostReport()">
+            📊 Generar Report TrackBoost (HTML)
+          </button>
+          <div id="trackboostReportData" style="margin-top: 1.5rem;"></div>
+        </div>
+      </div>
+      
+      <!-- Reportes Anteriores (Histórico) -->
+      <div class="card mt-3">
+        <div class="card-header">
+          <h3 class="card-title">📈 Registro Histórico de Campañas</h3>
+        </div>
+        <div style="padding: 2rem;">
+          <p style="color: var(--gray-300); margin-bottom: 1.5rem;">
+            Visualiza la evolución del rendimiento de tus campañas semana a semana. Se actualiza automáticamente cada vez que generas un report de Monitoring.
+          </p>
+          
+          <div style="margin-bottom: 1rem;">
+            <label style="color: var(--gray-300); font-weight: 600; display: block; margin-bottom: 0.5rem;">
+              Mostrar:
+            </label>
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+              <button id="btnHistoricoReciente" class="btn btn-primary" onclick="App.showHistorico('reciente')">
+                📊 Últimas 4 Semanas
+              </button>
+              <button id="btnHistoricoCompleto" class="btn btn-secondary" onclick="App.showHistorico('completo')">
+                📅 Histórico Completo
+              </button>
+              <button class="btn btn-secondary" onclick="App.exportHistoricoExcel()">
+                📥 Exportar a Excel
+              </button>
+            </div>
+          </div>
+          
+          <div id="historicoContainer" style="overflow-x: auto; margin-top: 1.5rem;">
+            <p style="text-align: center; color: var(--gray-400); padding: 3rem;">
+              📊 Genera tu primer report de Monitoring para empezar a construir el histórico
+            </p>
+          </div>
+          
+          <div id="historicoGraficoContainer" style="margin-top: 2rem; display: none;">
+            <h4 style="color: var(--gray-200); margin-bottom: 1rem;">📈 Evolución del CPF</h4>
+            <canvas id="historicoGrafico" style="max-height: 400px;"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Artistas -->
+    <div id="artistsTab" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Artistas Configurados</h3>
+        </div>
+        <div style="padding: 2rem;">
+          <div id="artistsList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem;">
+            <!-- Se llena dinámicamente -->
+          </div>
+        </div>
+      </div>
+
+      <div class="card mt-3">
+        <div class="card-header">
+          <h3 class="card-title">Añadir Nuevo Artista</h3>
+        </div>
+        <div style="padding: 2rem;">
+          <div class="form-group">
+            <label class="form-label">Nombre Artista</label>
+            <input type="text" id="newArtistName" class="form-input" placeholder="Ej: Nuevo Artista">
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">URL Playlist Spotify</label>
+            <input type="text" id="newArtistPlaylist" class="form-input" 
+                   placeholder="https://open.spotify.com/playlist/...">
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Keywords de Campaña (separadas por coma)</label>
+            <input type="text" id="newArtistKeywords" class="form-input" 
+                   placeholder="Ej: MIKY, Miky, miky">
+            <small style="color: var(--gray-300); font-size: 0.85rem;">
+              Son las palabras que aparecen en los nombres de tus campañas de Meta Ads para identificar al artista
+            </small>
+          </div>
+          
+          <button class="btn btn-primary" onclick="App.addNewArtist()">
+            ➕ Añadir Artista
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab: Snapshots -->
+<div id="snapshotsTab" class="tab-content">
+  <div class="card">
+    <h2 class="card-title">📸 Snapshots Persistentes (NO SE PIERDEN)</h2>
+    
+    <!-- Alerta de Seguridad -->
+    <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+      <h3 style="margin: 0 0 10px 0; font-size: 1.2rem;">✅ Sistema de Guardado Permanente Activado</h3>
+      <p style="margin: 5px 0; font-size: 0.95rem;">
+        ✓ Los snapshots se guardan en archivos <strong>.js</strong> que NO se pierden al borrar cache<br>
+        ✓ Cada vez que generas un report, se descarga automáticamente el archivo actualizado<br>
+        ✓ Simplemente reemplaza el archivo <code style="background: rgba(0,0,0,0.2); padding: 2px 6px; border-radius: 4px;">js/snapshotsPersistent.js</code> y recarga
+      </p>
+    </div>
+    
+    <p style="margin-bottom: 20px; color: #9ca3af; font-size: 0.95rem;">
+      Los snapshots se guardan automáticamente:<br>
+      • 📅 El día 1 de cada mes (automático)<br>
+      • 📊 Cada vez que generas "Monitoring Completo"<br>
+      • 💾 Manualmente cuando presionas el botón de guardado
+    </p>
+    
+    <div style="display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap;">
+      <button onclick="PersistenceManager.showInstructions()" class="btn-primary" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+        📖 Ver Instrucciones Completas
+      </button>
+      <button onclick="App.downloadCurrentSnapshotsFile()" class="btn-primary">
+        💾 Descargar Archivo Actual
+      </button>
+      <button onclick="App.showSnapshotsVisual()" class="btn-secondary">
+        🔍 Ver Snapshots Guardados
+      </button>
+      <button onclick="App.saveManualSnapshot()" class="btn-secondary">
+        ➕ Guardar Snapshot Manual
+      </button>
+    </div>
+    
+    <h3 style="margin-top: 2rem; margin-bottom: 1rem;">📊 Últimos Snapshots Guardados</h3>
+    <div id="snapshotsList" style="max-height: 600px; overflow-y: auto;">
+      <p style="color: #9ca3af;">Cargando snapshots...</p>
+    </div>
+  </div>
+</div>
+
+<!-- Scripts -->
+  <script src="js/auth.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/historicalData.js"></script>
+    <script src="js/historicalDataImport.js"></script>
+  <script src="js/datosActualesSpotify.js"></script>
+  <script src="js/monitoringHistory.js"></script>
+  <script src="js/spotify.js"></script>
+  <script src="js/dataProcessor.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/reports.js"></script>
+  <script src="js/reportsNew.js"></script>
+  <script src="js/reportsFinal.js"></script>
+  <script src="js/htmlReports.js"></script>
+  <script src="js/trackboostReportNew.js"></script>
+  <script src="js/reportComplete.js"></script>
+  <script src="js/reportSnapshots.js"></script>
+  <script src="js/snapshotsPersistent.js"></script>
+  <script src="js/spotifyDataPersistent.js"></script>
+  <script src="js/persistenceManager.js"></script>
+  <script src="js/reportsCorrect.js"></script>
+  <script src="js/main.js"></script>
+  
+  <script>
+    // Generar HTML visual con branding Elixir
+    App.generateHTMLReport = async function() {
+      if (this.data.enrichedData.length === 0) {
+        this.showAlert('warning', 'Carga datos primero');
+        return;
+      }
+      
+      const startDate = document.getElementById('reportStartDate').value;
+      const endDate = document.getElementById('reportEndDate').value;
+      
+      this.showLoading('Generando Report Completo (Playlist + TrackBoost con TODA la info)...');
+      
+      try {
+        // DEBUG: Ver TODAS las campañas y específicamente Steban
+        console.log('🔍 DEBUG COMPLETO - BUSCANDO STEBAN:');
+        console.log(`📊 Total enrichedData: ${this.data.enrichedData.length} campañas`);
+        
+        const stebanCampaigns = this.data.enrichedData.filter(c => 
+          c.campaignName && c.campaignName.toLowerCase().includes('stban')
+        );
+        
+        console.log(`🎯 Campañas con "stban" encontradas: ${stebanCampaigns.length}`);
+        stebanCampaigns.forEach(c => {
+          console.log('  📌 Campaña:', {
+            campaignName: c.campaignName,
+            artist: c.artist,
+            artistData: c.artistData ? c.artistData.name : 'NO ARTIST DATA',
+            isTrackboost: c.artistData?.isTrackboost,
+            startDate: c.startDate,
+            endDate: c.endDate
+          });
+        });
+        
+        // Campañas normales (excluir TrackBoost y Julien Soundcloud/Followers)
+        const normalCampaigns = this.data.enrichedData.filter(c => {
+          if (c.startDate < startDate || c.endDate > endDate) return false;
+          if (c.artistData && c.artistData.isTrackboost) return false;
+          
+          // Excluir Julien Soundcloud y Followers
+          const campaignName = c.campaignName.toLowerCase();
+          if (campaignName.includes('julien') && (campaignName.includes('soundcloud') || campaignName.includes('followers'))) {
+            return false;
+          }
+          
+          // DEBUG: Verificar si estamos filtrando Steban por error
+          if (campaignName.includes('stban') && !campaignName.includes('trckbst')) {
+            console.log('✅ Steban playlist INCLUIDA en normalCampaigns:', c.campaignName);
+          }
+          
+          return true;
+        });
+        
+        // Campañas TrackBoost
+        const trackboostCampaigns = this.data.enrichedData.filter(c => 
+          c.startDate >= startDate && c.endDate <= endDate &&
+          c.artistData && c.artistData.isTrackboost
+        );
+        
+        // USAR NUEVO GENERADOR COMPLETO (con snapshot base)
+        const html = await ReportComplete.generateCompleteReport(
+          normalCampaigns, 
+          trackboostCampaigns, 
+          startDate, 
+          endDate,
+          this.snapshotBaseDate  // 📅 Pasar snapshot base
+        );
+        
+        // Descargar HTML
+        const blob = new Blob([html], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Monitoring_Completo_${startDate}_${endDate}.html`;
+        a.click();
+        URL.revokeObjectURL(url);
+        
+        this.hideLoading();
+        this.showAlert('success', '✅ Report Completo descargado (Playlist + TrackBoost)');
+      } catch (error) {
+        console.error('Error:', error);
+        this.hideLoading();
+        this.showAlert('danger', 'Error generando report: ' + error.message);
+      }
+    };
+    
+    // Generar HTML con branding completo Elixir
+    App.generateBrandedHTML = async function(rows, trackboostCampaigns, startDate, endDate) {
+      const totalSpent = rows.reduce((s, r) => s + parseFloat(r.spent), 0);
+      const totalIncrease = rows.reduce((s, r) => s + parseInt(r.increaseFollowers), 0);
+      const avgCPF = totalSpent / totalIncrease;
+      
+      // Agrupar TrackBoost por artista
+      const trackboostByArtist = {};
+      trackboostCampaigns.forEach(c => {
+        if (!trackboostByArtist[c.artist]) {
+          trackboostByArtist[c.artist] = {
+            artist: c.artist,
+            gasto: 0,
+            conversiones: 0,
+            alcance: 0
+          };
+        }
+        trackboostByArtist[c.artist].gasto += c.amountSpent;
+        trackboostByArtist[c.artist].conversiones += c.results;
+        trackboostByArtist[c.artist].alcance += c.reach;
+      });
+      
+      const trackboostRows = Object.values(trackboostByArtist);
+      
+      return `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monitoring Report ELIXIR</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #070616 0%, #0a0824 100%);
+      color: #FFFFFF;
+      padding: 40px;
+      line-height: 1.6;
+    }
+    .container { max-width: 1400px; margin: 0 auto; }
+    header {
+      background: rgba(7, 6, 22, 0.8);
+      backdrop-filter: blur(10px);
+      padding: 2rem;
+      border-radius: 16px;
+      border: 2px solid #EA34FA;
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+    h1 {
+      font-size: 2.5rem;
+      background: linear-gradient(135deg, #EA34FA 0%, #ff6bff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+    }
+    .period { color: #9ca3af; font-size: 1.1rem; }
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin: 2rem 0;
+    }
+    .kpi-card {
+      background: linear-gradient(135deg, rgba(234, 52, 250, 0.1) 0%, rgba(234, 52, 250, 0.05) 100%);
+      border: 2px solid rgba(234, 52, 250, 0.3);
+      border-radius: 16px;
+      padding: 1.5rem;
+      text-align: center;
+    }
+    .kpi-icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
+    .kpi-label { font-size: 0.9rem; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; }
+    .kpi-value { font-size: 2rem; font-weight: 700; color: #EA34FA; margin-top: 0.5rem; }
+    .card {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      padding: 2rem;
+      border: 1px solid rgba(234, 52, 250, 0.2);
+      margin-bottom: 2rem;
+    }
+    .card-title { font-size: 1.5rem; color: #EA34FA; margin-bottom: 1.5rem; border-bottom: 2px solid #EA34FA; padding-bottom: 0.5rem; }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: rgba(234, 52, 250, 0.2); color: #EA34FA; padding: 1rem; text-align: left; font-weight: 600; border-bottom: 2px solid #EA34FA; }
+    td { padding: 0.75rem 1rem; border-bottom: 1px solid rgba(234, 52, 250, 0.1); }
+    tr:hover { background: rgba(234, 52, 250, 0.1); }
+    .low-cost { background: rgba(16, 185, 129, 0.2) !important; color: #6ee7b7; font-weight: bold; }
+    .medium-cost { background: rgba(245, 158, 11, 0.2) !important; color: #fcd34d; font-weight: bold; }
+    .high-cost { background: rgba(239, 68, 68, 0.2) !important; color: #fca5a5; font-weight: bold; }
+    .legend {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin: 2rem 0;
+    }
+    .legend-item {
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    footer {
+      text-align: center;
+      margin-top: 3rem;
+      padding-top: 2rem;
+      border-top: 2px solid #EA34FA;
+      color: #9ca3af;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🎵 ELIXIR MONITORING REPORT</h1>
+      <p class="period">Periodo: ${ReportsFinal.formatDate(startDate)} - ${ReportsFinal.formatDate(endDate)}</p>
+    </header>
+    
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-icon">💰</div>
+        <div class="kpi-label">Gasto Total</div>
+        <div class="kpi-value">€${totalSpent.toFixed(2)}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon">👥</div>
+        <div class="kpi-label">Followers Ganados</div>
+        <div class="kpi-value">+${totalIncrease}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon">💵</div>
+        <div class="kpi-label">CPF Promedio</div>
+        <div class="kpi-value">€${avgCPF.toFixed(2)}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon">🎤</div>
+        <div class="kpi-label">Total Artistas</div>
+        <div class="kpi-value">${rows.length}</div>
+      </div>
+    </div>
+    
+    <div class="card">
+      <h2 class="card-title">Monitoring por Artista</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Artist</th>
+            <th>€/Follower</th>
+            <th>Increase</th>
+            <th>€ Gastado</th>
+            <th>Conv</th>
+            <th>Alcance</th>
+            <th>F. Inicio</th>
+            <th>F. Final</th>
+            <th>Acción</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(row => {
+            const cpf = parseFloat(row.costPerFollower);
+            let cssClass = cpf <= 2 ? 'low-cost' : cpf <= 3.5 ? 'medium-cost' : 'high-cost';
+            return `
+              <tr>
+                <td><strong>${row.artist}</strong></td>
+                <td class="${cssClass}">€${row.costPerFollower}</td>
+                <td style="color: ${row.increaseFollowers > 0 ? '#6ee7b7' : '#fca5a5'};">${row.increaseFollowers >= 0 ? '+' : ''}${row.increaseFollowers}</td>
+                <td>€${row.spent}</td>
+                <td>${row.conversions}</td>
+                <td>${row.reach.toLocaleString()}</td>
+                <td>${row.followersStart.toLocaleString()}</td>
+                <td>${row.followersEnd.toLocaleString()}</td>
+                <td style="font-size: 0.9rem;">${row.accion}</td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+    
+    <div class="legend">
+      <span class="legend-item low-cost">€/Follower ≤ €2 - Excelente</span>
+      <span class="legend-item medium-cost">€/Follower €2-3.5 - Aceptable</span>
+      <span class="legend-item high-cost">€/Follower > €3.5 - Optimizar</span>
+    </div>
+    
+    ${trackboostRows.length > 0 ? `
+    <div class="card" style="border: 2px solid #f59e0b;">
+      <h2 class="card-title" style="color: #f59e0b; border-bottom-color: #f59e0b;">⚡ Campañas TrackBoost</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Artista</th>
+            <th>€ Gastado</th>
+            <th>Conversiones</th>
+            <th>Alcance</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${trackboostRows.map(track => `
+            <tr>
+              <td><strong>${track.artist}</strong></td>
+              <td>€${track.gasto.toFixed(2)}</td>
+              <td>${track.conversiones}</td>
+              <td>${track.alcance.toLocaleString()}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+    ` : ''}
+    
+    <footer>
+      <p>Report generado por ELIXIR Dashboard</p>
+      <p>${new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
+    </footer>
+  </div>
+</body>
+</html>
+      `;
+    };
+  </script>
+
+  <script>
+    // Renderizar lista de artistas en tab Artistas
+    function renderArtistsList() {
+      const container = document.getElementById('artistsList');
+      if (!container) return;
+      
+      container.innerHTML = CONFIG.artists.map(artist => `
+        <div class="card" style="padding: 1rem;">
+          <div class="flex justify-between items-center">
+            <div>
+              <h4 style="color: var(--elixir-pink); margin-bottom: 0.5rem;">${artist.name}</h4>
+              <p style="font-size: 0.85rem; color: var(--gray-300); margin: 0;">
+                ${artist.active ? '✓ Activo' : '✗ Inactivo'}
+              </p>
+            </div>
+            <button class="btn btn-secondary" 
+                    onclick="toggleArtist('${artist.name}')"
+                    style="padding: 0.5rem 1rem;">
+              ${artist.active ? 'Desactivar' : 'Activar'}
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Toggle artista activo/inactivo
+    function toggleArtist(artistName) {
+      const artist = CONFIG.artists.find(a => a.name === artistName);
+      if (artist) {
+        artist.active = !artist.active;
+        localStorage.setItem('artists_config', JSON.stringify(CONFIG.artists));
+        renderArtistsList();
+        App.showAlert('success', `${artistName} ${artist.active ? 'activado' : 'desactivado'}`);
+      }
+    }
+
+    // Añadir nuevo artista
+    App.addNewArtist = function() {
+      const name = document.getElementById('newArtistName').value.trim();
+      const playlistUrl = document.getElementById('newArtistPlaylist').value.trim();
+      const keywords = document.getElementById('newArtistKeywords').value.trim();
+      
+      if (!name || !playlistUrl || !keywords) {
+        this.showAlert('warning', 'Completa todos los campos');
+        return;
+      }
+      
+      // Extraer playlist ID
+      const match = playlistUrl.match(/playlist\/([a-zA-Z0-9]+)/);
+      if (!match) {
+        this.showAlert('danger', 'URL de playlist inválida');
+        return;
+      }
+      
+      const playlistId = match[1];
+      const keywordArray = keywords.split(',').map(k => k.trim());
+      
+      CONFIG.artists.push({
+        name,
+        playlistId,
+        playlistUrl,
+        active: true,
+        campaignKeywords: keywordArray
+      });
+      
+      localStorage.setItem('artists_config', JSON.stringify(CONFIG.artists));
+      
+      // Limpiar formulario
+      document.getElementById('newArtistName').value = '';
+      document.getElementById('newArtistPlaylist').value = '';
+      document.getElementById('newArtistKeywords').value = '';
+      
+      renderArtistsList();
+      this.showAlert('success', `Artista ${name} añadido correctamente`);
+    };
+
+    // Cargar configuración de artistas guardada
+    const savedArtists = localStorage.getItem('artists_config');
+    if (savedArtists) {
+      CONFIG.artists = JSON.parse(savedArtists);
+    }
+
+    // Poblar selector de artistas en reportes
+    function populateArtistSelector() {
+      const selector = document.getElementById('artistSelector');
+      const manualSelector = document.getElementById('manualArtistSelector');
+      
+      const activeArtists = CONFIG.artists.filter(a => a.active && !a.isTrackboost);
+      
+      if (selector) {
+        selector.innerHTML = '<option value="">-- Selecciona un artista --</option>';
+        activeArtists.forEach(artist => {
+          const option = document.createElement('option');
+          option.value = artist.name;
+          option.textContent = artist.name;
+          selector.appendChild(option);
+        });
+      }
+      
+      if (manualSelector) {
+        manualSelector.innerHTML = '<option value="">-- Selecciona artista --</option>';
+        activeArtists.forEach(artist => {
+          const option = document.createElement('option');
+          option.value = artist.name;
+          option.textContent = artist.name;
+          manualSelector.appendChild(option);
+        });
+      }
+    }
+    
+    // Guardar datos manuales
+    App.saveManualData = function() {
+      const artistName = document.getElementById('manualArtistSelector').value;
+      const oyentes = parseInt(document.getElementById('manualOyentes').value);
+      const seguidores = parseInt(document.getElementById('manualSeguidores').value);
+      
+      if (!artistName) {
+        this.showAlert('warning', 'Selecciona un artista');
+        return;
+      }
+      
+      if (isNaN(oyentes) || isNaN(seguidores)) {
+        this.showAlert('warning', 'Ingresa valores numéricos');
+        return;
+      }
+      
+      const today = new Date().toISOString().split('T')[0];
+      HistoricalData.updateManualData(artistName, today, oyentes, seguidores);
+      
+      // Limpiar campos
+      document.getElementById('manualOyentes').value = '';
+      document.getElementById('manualSeguidores').value = '';
+      
+      this.showAlert('success', `Datos manuales de ${artistName} guardados`);
+    };
+
+    // Renderizar configuración TrackBoost
+    function renderTrackboostConfig() {
+      const container = document.getElementById('trackboostConfig');
+      if (!container) return;
+      
+      const trackboostArtists = CONFIG.artists.filter(a => a.isTrackboost);
+      
+      container.innerHTML = trackboostArtists.map(artist => {
+        const trackConfig = HistoricalData.getTrackboostTrack(artist.name) || {};
+        const key = artist.name.toLowerCase().replace(/\s/g, '_').replace(/[()]/g, '');
+        return `
+          <div class="card" style="margin-bottom: 1rem; background: rgba(245, 158, 11, 0.05); padding: 1.5rem;">
+            <h4 style="color: #f59e0b; margin-bottom: 1rem;">${artist.name}</h4>
+            
+            <div class="form-group">
+              <label class="form-label">Track URL Spotify</label>
+              <input type="text" 
+                     id="trackUrl_${key}" 
+                     class="form-input" 
+                     placeholder="https://open.spotify.com/track/..."
+                     value="${trackConfig.trackUrl || ''}">
+              <small style="color: var(--gray-300); font-size: 0.85rem; display: block; margin-top: 0.5rem;">
+                El Track ID se extrae automáticamente de la URL
+              </small>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Nombre del Track</label>
+              <input type="text" 
+                     id="trackName_${key}" 
+                     class="form-input" 
+                     placeholder="Ej: Minotaur"
+                     value="${trackConfig.trackName || ''}">
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">💰 Tipo de Presupuesto</label>
+              <select id="budgetType_${key}" class="form-input" style="width: auto;">
+                <option value="lite" ${artist.budgetType === 'lite' ? 'selected' : ''}>Lite (€200)</option>
+                <option value="normal" ${artist.budgetType === 'normal' || !artist.budgetType ? 'selected' : ''}>Normal (€500)</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">💾 Saves Actuales (Manual)</label>
+              <input type="number" 
+                     id="currentSaves_${key}" 
+                     class="form-input" 
+                     placeholder="0"
+                     value="${trackConfig.currentSaves || 0}">
+              <small style="color: var(--gray-300); font-size: 0.85rem; display: block; margin-top: 0.5rem;">
+                Introduce el número de saves actual del track
+              </small>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">📺 Streams (Manual)</label>
+              <input type="number" 
+                     id="streams_${key}" 
+                     class="form-input" 
+                     placeholder="0"
+                     value="${trackConfig.streams || 0}">
+              <small style="color: var(--gray-300); font-size: 0.85rem; display: block; margin-top: 0.5rem;">
+                Introduce el número de streams del track
+              </small>
+            </div>
+            
+            <button class="btn btn-secondary" onclick="saveTrackConfig('${key}', '${artist.name}')">
+              💾 Guardar Track
+            </button>
+            <div id="trackStatus_${key}" style="margin-top: 1rem;"></div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Guardar configuración TrackBoost
+    window.saveTrackConfig = async function(key, artistName) {
+      const trackUrl = document.getElementById(`trackUrl_${key}`).value.trim();
+      const trackName = document.getElementById(`trackName_${key}`).value.trim();
+      const budgetTypeSelect = document.getElementById(`budgetType_${key}`);
+      const budgetType = budgetTypeSelect ? budgetTypeSelect.value : 'normal';
+      
+      // Datos manuales
+      const currentSavesInput = document.getElementById(`currentSaves_${key}`);
+      const lastSavesInput = document.getElementById(`lastSaves_${key}`);
+      const streamsInput = document.getElementById(`streams_${key}`);
+      const gastoTotalInput = document.getElementById(`gastoTotal_${key}`);
+      
+      const currentSaves = currentSavesInput ? parseInt(currentSavesInput.value) || 0 : 0;
+      const lastSaves = lastSavesInput ? parseInt(lastSavesInput.value) || 0 : 0;
+      const streams = streamsInput ? parseInt(streamsInput.value) || 0 : 0;
+      const gastoTotal = gastoTotalInput ? parseFloat(gastoTotalInput.value) || 0 : 0;
+      
+      if (!trackUrl) {
+        App.showAlert('warning', 'Ingresa la URL del track');
+        return;
+      }
+      
+      // Extraer Track ID de la URL
+      const match = trackUrl.match(/track\/([a-zA-Z0-9]+)/);
+      if (!match) {
+        App.showAlert('danger', 'URL inválida. Debe ser: spotify.com/track/ID');
+        return;
+      }
+      
+      const trackId = match[1];
+      
+      // Guardar configuración (incluye budgetType, currentSaves, lastSaves, streams, gastos)
+      HistoricalData.updateTrackboostConfig(artistName, {
+        trackId: trackId,
+        trackUrl: trackUrl,
+        trackName: trackName || 'Track',
+        currentSaves: currentSaves,
+        lastSaves: lastSaves,
+        streams: streams,
+        gastoTotalCampana: gastoTotal
+      });
+      
+      // Actualizar budgetType en CONFIG
+      const artist = CONFIG.artists.find(a => a.name === artistName);
+      if (artist && artist.isTrackboost) {
+        artist.budgetType = budgetType;
+        artist.budgetTotal = budgetType === 'lite' ? 200 : 500;
+        console.log(`✅ Actualizado ${artistName}: ${budgetType.toUpperCase()} (€${artist.budgetTotal}), Saves: ${currentSaves}, Last Saves: ${lastSaves}, Streams: ${streams}, Gasto Total: €${gastoTotal}`);
+      }
+      
+      // Obtener datos del track inmediatamente
+      try {
+        const trackData = await SpotifyAPI.getTrackSaves(trackId);
+        if (trackData) {
+          // Guardar como baseline si es la primera vez
+          const config = HistoricalData.getTrackboostTrack(artistName);
+          if (config.baselineSaves === 0) {
+            HistoricalData.updateTrackboostConfig(artistName, {
+              baselineSaves: trackData.estimatedSaves
+            });
+          }
+          
+          document.getElementById(`trackStatus_${key}`).innerHTML = `
+            <div style="background: rgba(16, 185, 129, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #10b981;">
+              <p style="color: #10b981; margin: 0;"><strong>✓ Track configurado:</strong></p>
+              <p style="color: var(--elixir-white); margin: 0.5rem 0 0 0;">
+                ${trackData.name} - Popularidad: ${trackData.popularity}/100 - Saves: ~${trackData.estimatedSaves.toLocaleString()}
+              </p>
+            </div>
+          `;
+          
+          App.showAlert('success', `Track ${trackName} configurado correctamente`);
+        }
+      } catch (error) {
+        App.showAlert('danger', 'Error obteniendo datos del track');
+      }
+    };
+    
+    // Actualizar datos TrackBoost
+    App.updateTrackboostData = async function() {
+      this.showLoading('Actualizando datos TrackBoost...');
+      
+      try {
+        const trackboostData = await SpotifyAPI.updateTrackboostTracks();
+        
+        if (trackboostData.length > 0) {
+          // Guardar
+          localStorage.setItem('trackboost_data', JSON.stringify(trackboostData));
+          
+          // Mostrar en dashboard
+          this.renderTrackboostData(trackboostData);
+          
+          this.hideLoading();
+          this.showAlert('success', `Datos TrackBoost actualizados (${trackboostData.length} tracks)`);
+        } else {
+          this.hideLoading();
+          this.showAlert('warning', 'Configura los tracks primero');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        this.hideLoading();
+        this.showAlert('danger', 'Error actualizando TrackBoost');
+      }
+    };
+    
+    // Renderizar datos TrackBoost en dashboard
+    App.renderTrackboostData = function(data) {
+      // Actualizar sección TrackBoost con datos de tracks
+      const tbody = document.getElementById('trackboostTableBody');
+      if (!tbody) return;
+      
+      tbody.innerHTML = data.map(track => `
+        <tr>
+          <td>${track.artist}</td>
+          <td>${track.name}</td>
+          <td>${track.popularity}/100</td>
+          <td>${track.estimatedSaves.toLocaleString()}</td>
+          <td>${track.savesIncrease >= 0 ? '+' : ''}${track.savesIncrease.toLocaleString()}</td>
+          <td>N/A</td>
+        </tr>
+      `).join('');
+    };
+    
+    // Generar report TrackBoost
+    App.generateTrackboostReport = async function() {
+      const trackboostCampaigns = this.data.enrichedData.filter(c => 
+        c.artistData && c.artistData.isTrackboost
+      );
+      
+      if (trackboostCampaigns.length === 0) {
+        this.showAlert('warning', 'No hay campañas TrackBoost');
+        return;
+      }
+      
+      const startDate = document.getElementById('reportStartDate').value;
+      const endDate = document.getElementById('reportEndDate').value;
+      
+      this.showLoading('Generando report TrackBoost con datos de Spotify...');
+      
+      try {
+        // Generar HTML con datos reales de Spotify (NUEVO SISTEMA COMPLETO)
+        const html = await TrackBoostReportComplete.generateCompleteHTMLReport(trackboostCampaigns, startDate, endDate);
+        
+        // Descargar HTML
+        const blob = new Blob([html], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Report_TrackBoost_${startDate}_${endDate}.html`;
+        a.click();
+        URL.revokeObjectURL(url);
+        
+        this.hideLoading();
+        this.showAlert('success', '✅ Report TrackBoost descargado (HTML)');
+      } catch (error) {
+        console.error('Error:', error);
+        this.hideLoading();
+        this.showAlert('danger', 'Error generando report TrackBoost: ' + error.message);
+      }
+    };
+    
+    // Generar report individual artista
+    App.generateArtistReport = async function() {
+      const artist = document.getElementById('artistSelector').value;
+      if (!artist) {
+        this.showAlert('warning', 'Selecciona un artista primero');
+        return;
+      }
+      
+      const startDate = document.getElementById('artistReportStartDate').value;
+      const endDate = document.getElementById('artistReportEndDate').value;
+      
+      this.showLoading(`Generando report de ${artist}...`);
+      
+      try {
+        // Generar HTML con HTMLReports
+        const html = await HTMLReports.generateArtistHTMLReport(artist, startDate, endDate);
+        
+        if (!html) {
+          throw new Error('No se pudo generar el report');
+        }
+        
+        // Descargar HTML
+        const blob = new Blob([html], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Report_${artist.replace(/\s/g, '_')}_${startDate}_${endDate}.html`;
+        a.click();
+        URL.revokeObjectURL(url);
+        
+        this.hideLoading();
+        this.showAlert('success', `✅ Report de ${artist} descargado`);
+      } catch (error) {
+        console.error('Error:', error);
+        this.hideLoading();
+        this.showAlert('danger', 'Error generando report: ' + error.message);
+      }
+    };
+    
+    // Generar HTML TrackBoost
+    App.generateTrackboostHTML = function(campaigns, trackData) {
+      const byArtist = {};
+      campaigns.forEach(c => {
+        if (!byArtist[c.artist]) {
+          byArtist[c.artist] = {
+            artist: c.artist,
+            campaigns: [],
+            totalSpent: 0,
+            totalResults: 0
+          };
+        }
+        byArtist[c.artist].campaigns.push(c);
+        byArtist[c.artist].totalSpent += c.amountSpent;
+        byArtist[c.artist].totalResults += c.results;
+      });
+      
+      return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Report TrackBoost - ELIXIR</title>
+  <style>
+    body { font-family: Calibri, Arial, sans-serif; margin: 40px; }
+    h1 { color: #f59e0b; border-bottom: 3px solid #f59e0b; padding-bottom: 10px; }
+    table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+    th { background: #f59e0b; color: white; padding: 10px; text-align: left; }
+    td { padding: 10px; border: 1px solid #ddd; }
+    tr:nth-child(even) { background: #fef3c7; }
+  </style>
+</head>
+<body>
+  <h1>🎯 REPORT TRACKBOOST - ELIXIR</h1>
+  <table>
+    <thead>
+      <tr>
+        <th>Artist</th>
+        <th>Track</th>
+        <th>€ Gastado</th>
+        <th>Conversiones</th>
+        <th>€/Conv</th>
+        <th>Popularidad</th>
+        <th>Saves Estimados</th>
+        <th>Aumento Saves</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${Object.values(byArtist).map(artist => {
+        const track = trackData.find(t => t.artist === artist.artist) || {};
+        const costPerConv = artist.totalResults > 0 ? artist.totalSpent / artist.totalResults : 0;
+        
+        return `
+          <tr>
+            <td><strong>${artist.artist}</strong></td>
+            <td>${track.name || 'N/A'}</td>
+            <td>€${artist.totalSpent.toFixed(2)}</td>
+            <td>${artist.totalResults}</td>
+            <td>€${costPerConv.toFixed(2)}</td>
+            <td>${track.popularity || 'N/A'}/100</td>
+            <td>${track.estimatedSaves ? track.estimatedSaves.toLocaleString() : 'N/A'}</td>
+            <td>${track.savesIncrease >= 0 ? '+' : ''}${track.savesIncrease || 0}</td>
+          </tr>
+        `;
+      }).join('')}
+    </tbody>
+  </table>
+</body>
+</html>
+      `;
+    };
+
+    // Renderizar al cargar
+    // 📊 COMPARACIÓN DE PERIODOS
+    const btnCompareToggle = document.getElementById('btnCompareToggle');
+    const comparisonContainer = document.getElementById('comparisonContainer');
+    const btnGenerateComparison = document.getElementById('btnGenerateComparison');
+    
+    if (btnCompareToggle) {
+      btnCompareToggle.addEventListener('click', () => {
+        const isVisible = comparisonContainer.style.display !== 'none';
+        comparisonContainer.style.display = isVisible ? 'none' : 'block';
+        btnCompareToggle.textContent = isVisible ? '🔄 Activar Comparación' : '❌ Cerrar Comparación';
+      });
+    }
+    
+    if (btnGenerateComparison) {
+      btnGenerateComparison.addEventListener('click', async () => {
+        const period1Start = document.getElementById('period1Start').value;
+        const period1End = document.getElementById('period1End').value;
+        const period2Start = document.getElementById('period2Start').value;
+        const period2End = document.getElementById('period2End').value;
+        
+        if (!period1Start || !period1End || !period2Start || !period2End) {
+          App.showAlert('warning', 'Completa todas las fechas de los dos periodos');
+          return;
+        }
+        
+        App.showLoading('Generando comparación de periodos...');
+        
+        try {
+          // Filtrar campañas por periodo
+          const period1Campaigns = App.data.enrichedData.filter(c => {
+            if (c.artistData && c.artistData.isTrackboost) return false;
+            const campaignName = c.campaignName.toLowerCase();
+            if (campaignName.includes('julien') && (campaignName.includes('soundcloud') || campaignName.includes('followers'))) {
+              return false;
+            }
+            return c.startDate >= period1Start && c.endDate <= period1End;
+          });
+          
+          const period2Campaigns = App.data.enrichedData.filter(c => {
+            if (c.artistData && c.artistData.isTrackboost) return false;
+            const campaignName = c.campaignName.toLowerCase();
+            if (campaignName.includes('julien') && (campaignName.includes('soundcloud') || campaignName.includes('followers'))) {
+              return false;
+            }
+            return c.startDate >= period2Start && c.endDate <= period2End;
+          });
+          
+          if (period1Campaigns.length === 0 || period2Campaigns.length === 0) {
+            App.hideLoading();
+            App.showAlert('warning', 'No hay suficientes campañas en uno o ambos periodos');
+            return;
+          }
+          
+          // Calcular métricas de cada periodo
+          const period1Data = await ReportsFinal.generateMonitoringReport(period1Campaigns, period1Start, period1End);
+          const period2Data = await ReportsFinal.generateMonitoringReport(period2Campaigns, period2Start, period2End);
+          
+          // Calcular totales
+          const period1Totals = {
+            totalSpent: period1Data.reduce((s, a) => s + parseFloat(a.spent), 0),
+            totalFollowers: period1Data.reduce((s, a) => s + parseInt(a.increaseFollowers), 0),
+            totalReach: period1Data.reduce((s, a) => s + parseInt(a.reach), 0),
+            avgCPF: 0
+          };
+          period1Totals.avgCPF = period1Totals.totalFollowers > 0 ? period1Totals.totalSpent / period1Totals.totalFollowers : 0;
+          
+          const period2Totals = {
+            totalSpent: period2Data.reduce((s, a) => s + parseFloat(a.spent), 0),
+            totalFollowers: period2Data.reduce((s, a) => s + parseInt(a.increaseFollowers), 0),
+            totalReach: period2Data.reduce((s, a) => s + parseInt(a.reach), 0),
+            avgCPF: 0
+          };
+          period2Totals.avgCPF = period2Totals.totalFollowers > 0 ? period2Totals.totalSpent / period2Totals.totalFollowers : 0;
+          
+          // Calcular cambios
+          const changes = {
+            spent: {
+              value: period2Totals.totalSpent - period1Totals.totalSpent,
+              percentage: period1Totals.totalSpent > 0 ? ((period2Totals.totalSpent - period1Totals.totalSpent) / period1Totals.totalSpent * 100) : 0
+            },
+            followers: {
+              value: period2Totals.totalFollowers - period1Totals.totalFollowers,
+              percentage: period1Totals.totalFollowers > 0 ? ((period2Totals.totalFollowers - period1Totals.totalFollowers) / period1Totals.totalFollowers * 100) : 0
+            },
+            cpf: {
+              value: period2Totals.avgCPF - period1Totals.avgCPF,
+              percentage: period1Totals.avgCPF > 0 ? ((period2Totals.avgCPF - period1Totals.avgCPF) / period1Totals.avgCPF * 100) : 0
+            },
+            reach: {
+              value: period2Totals.totalReach - period1Totals.totalReach,
+              percentage: period1Totals.totalReach > 0 ? ((period2Totals.totalReach - period1Totals.totalReach) / period1Totals.totalReach * 100) : 0
+            }
+          };
+          
+          // Generar HTML de comparación
+          let html = '<div style="display: grid; gap: 1.5rem;">';
+          
+          // Resumen general
+          html += `
+            <div style="background: rgba(59, 130, 246, 0.05); border: 2px solid rgba(59, 130, 246, 0.3); border-radius: 12px; padding: 1.5rem;">
+              <h4 style="color: #3b82f6; margin-bottom: 1rem;">📈 Resumen de Cambios</h4>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                
+                <!-- Gasto -->
+                <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 8px; padding: 1rem; text-align: center;">
+                  <div style="color: var(--gray-400); font-size: 0.85rem; margin-bottom: 0.5rem;">💰 Gasto Total</div>
+                  <div style="font-size: 1.8rem; font-weight: 700; color: ${changes.spent.value >= 0 ? '#f59e0b' : '#10b981'}; margin-bottom: 0.25rem;">
+                    ${changes.spent.value >= 0 ? '+' : ''}€${Math.abs(changes.spent.value).toFixed(2)}
+                  </div>
+                  <div style="font-size: 0.9rem; color: ${changes.spent.percentage >= 0 ? '#f59e0b' : '#10b981'};">
+                    ${changes.spent.percentage >= 0 ? '↗' : '↘'} ${Math.abs(changes.spent.percentage).toFixed(1)}%
+                  </div>
+                  <div style="font-size: 0.75rem; color: var(--gray-500); margin-top: 0.5rem;">
+                    €${period1Totals.totalSpent.toFixed(2)} → €${period2Totals.totalSpent.toFixed(2)}
+                  </div>
+                </div>
+                
+                <!-- Followers -->
+                <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 8px; padding: 1rem; text-align: center;">
+                  <div style="color: var(--gray-400); font-size: 0.85rem; margin-bottom: 0.5rem;">👥 Followers Ganados</div>
+                  <div style="font-size: 1.8rem; font-weight: 700; color: ${changes.followers.value >= 0 ? '#10b981' : '#ef4444'}; margin-bottom: 0.25rem;">
+                    ${changes.followers.value >= 0 ? '+' : ''}${changes.followers.value}
+                  </div>
+                  <div style="font-size: 0.9rem; color: ${changes.followers.percentage >= 0 ? '#10b981' : '#ef4444'};">
+                    ${changes.followers.percentage >= 0 ? '↗' : '↘'} ${Math.abs(changes.followers.percentage).toFixed(1)}%
+                  </div>
+                  <div style="font-size: 0.75rem; color: var(--gray-500); margin-top: 0.5rem;">
+                    ${period1Totals.totalFollowers} → ${period2Totals.totalFollowers}
+                  </div>
+                </div>
+                
+                <!-- CPF -->
+                <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 8px; padding: 1rem; text-align: center;">
+                  <div style="color: var(--gray-400); font-size: 0.85rem; margin-bottom: 0.5rem;">💎 CPF Promedio</div>
+                  <div style="font-size: 1.8rem; font-weight: 700; color: ${changes.cpf.value <= 0 ? '#10b981' : '#ef4444'}; margin-bottom: 0.25rem;">
+                    ${changes.cpf.value >= 0 ? '+' : ''}€${Math.abs(changes.cpf.value).toFixed(2)}
+                  </div>
+                  <div style="font-size: 0.9rem; color: ${changes.cpf.percentage <= 0 ? '#10b981' : '#ef4444'};">
+                    ${changes.cpf.value <= 0 ? '↘' : '↗'} ${Math.abs(changes.cpf.percentage).toFixed(1)}%
+                  </div>
+                  <div style="font-size: 0.75rem; color: var(--gray-500); margin-top: 0.5rem;">
+                    €${period1Totals.avgCPF.toFixed(2)} → €${period2Totals.avgCPF.toFixed(2)}
+                  </div>
+                </div>
+                
+                <!-- Alcance -->
+                <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 8px; padding: 1rem; text-align: center;">
+                  <div style="color: var(--gray-400); font-size: 0.85rem; margin-bottom: 0.5rem;">📈 Alcance Total</div>
+                  <div style="font-size: 1.8rem; font-weight: 700; color: ${changes.reach.value >= 0 ? '#10b981' : '#ef4444'}; margin-bottom: 0.25rem;">
+                    ${changes.reach.value >= 0 ? '+' : ''}${Math.abs(changes.reach.value).toLocaleString()}
+                  </div>
+                  <div style="font-size: 0.9rem; color: ${changes.reach.percentage >= 0 ? '#10b981' : '#ef4444'};">
+                    ${changes.reach.percentage >= 0 ? '↗' : '↘'} ${Math.abs(changes.reach.percentage).toFixed(1)}%
+                  </div>
+                  <div style="font-size: 0.75rem; color: var(--gray-500); margin-top: 0.5rem;">
+                    ${period1Totals.totalReach.toLocaleString()} → ${period2Totals.totalReach.toLocaleString()}
+                  </div>
+                </div>
+                
+              </div>
+            </div>
+          `;
+          
+          // Insights automáticos
+          html += `
+            <div style="background: rgba(139, 92, 246, 0.05); border: 2px solid rgba(139, 92, 246, 0.3); border-radius: 12px; padding: 1.5rem;">
+              <h4 style="color: #8b5cf6; margin-bottom: 1rem;">💡 Insights Automáticos</h4>
+              <div style="display: grid; gap: 0.75rem;">
+          `;
+          
+          // Generar insights
+          if (changes.cpf.value < -0.10) {
+            html += `<div style="padding: 0.75rem; background: rgba(16, 185, 129, 0.1); border-left: 3px solid #10b981; border-radius: 4px;">
+              ✅ <strong>CPF mejoró significativamente</strong> (-€${Math.abs(changes.cpf.value).toFixed(2)} / ${Math.abs(changes.cpf.percentage).toFixed(1)}%) - La optimización está funcionando
+            </div>`;
+          } else if (changes.cpf.value > 0.10) {
+            html += `<div style="padding: 0.75rem; background: rgba(239, 68, 68, 0.1); border-left: 3px solid #ef4444; border-radius: 4px;">
+              ⚠️ <strong>CPF empeoró</strong> (+€${changes.cpf.value.toFixed(2)} / +${changes.cpf.percentage.toFixed(1)}%) - Revisar targeting y creativos
+            </div>`;
+          }
+          
+          if (changes.followers.value > 50) {
+            html += `<div style="padding: 0.75rem; background: rgba(16, 185, 129, 0.1); border-left: 3px solid #10b981; border-radius: 4px;">
+              ✅ <strong>Excelente crecimiento</strong> (+${changes.followers.value} followers / +${changes.followers.percentage.toFixed(1)}%) - Volumen aumentando
+            </div>`;
+          } else if (changes.followers.value < -20) {
+            html += `<div style="padding: 0.75rem; background: rgba(239, 68, 68, 0.1); border-left: 3px solid #ef4444; border-radius: 4px;">
+              ⚠️ <strong>Volumen bajó</strong> (${changes.followers.value} followers / ${changes.followers.percentage.toFixed(1)}%) - Revisar estrategia
+            </div>`;
+          }
+          
+          if (changes.reach.percentage > 20) {
+            html += `<div style="padding: 0.75rem; background: rgba(16, 185, 129, 0.1); border-left: 3px solid #10b981; border-radius: 4px;">
+              ✅ <strong>Alcance creció</strong> (+${changes.reach.percentage.toFixed(1)}%) - Mayor visibilidad
+            </div>`;
+          }
+          
+          const efficiency = period2Totals.totalFollowers / period2Totals.totalSpent;
+          const prevEfficiency = period1Totals.totalFollowers / period1Totals.totalSpent;
+          if (efficiency > prevEfficiency * 1.1) {
+            html += `<div style="padding: 0.75rem; background: rgba(16, 185, 129, 0.1); border-left: 3px solid #10b981; border-radius: 4px;">
+              ✅ <strong>Eficiencia mejoró</strong> - Consigues más followers por euro invertido
+            </div>`;
+          }
+          
+          html += '</div></div>';
+          
+          // Comparación por artista (top 5 cambios)
+          const artistComparison = [];
+          period2Data.forEach(p2Artist => {
+            const p1Artist = period1Data.find(a => a.artist === p2Artist.artist);
+            if (p1Artist) {
+              const cpfChange = parseFloat(p2Artist.costPerFollower) - parseFloat(p1Artist.costPerFollower);
+              const followersChange = parseInt(p2Artist.increaseFollowers) - parseInt(p1Artist.increaseFollowers);
+              artistComparison.push({
+                artist: p2Artist.artist,
+                cpfChange: cpfChange,
+                followersChange: followersChange,
+                cpf1: parseFloat(p1Artist.costPerFollower),
+                cpf2: parseFloat(p2Artist.costPerFollower),
+                followers1: parseInt(p1Artist.increaseFollowers),
+                followers2: parseInt(p2Artist.increaseFollowers)
+              });
+            }
+          });
+          
+          // Top 3 mejoras y top 3 empeoramientos de CPF
+          const improvements = artistComparison.filter(a => a.cpfChange < 0).sort((a, b) => a.cpfChange - b.cpfChange).slice(0, 3);
+          const deteriorations = artistComparison.filter(a => a.cpfChange > 0).sort((a, b) => b.cpfChange - a.cpfChange).slice(0, 3);
+          
+          if (improvements.length > 0 || deteriorations.length > 0) {
+            html += `
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            `;
+            
+            if (improvements.length > 0) {
+              html += `
+                <div style="background: rgba(16, 185, 129, 0.05); border: 2px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 1.5rem;">
+                  <h4 style="color: #10b981; margin-bottom: 1rem;">✅ Top Mejoras de CPF</h4>
+                  <div style="display: grid; gap: 0.75rem;">
+              `;
+              improvements.forEach(artist => {
+                html += `
+                  <div style="background: rgba(255,255,255,0.02); border-radius: 8px; padding: 0.75rem;">
+                    <div style="font-weight: 600; margin-bottom: 0.25rem;">${artist.artist}</div>
+                    <div style="font-size: 0.9rem; color: var(--gray-300);">
+                      CPF: €${artist.cpf1.toFixed(2)} → €${artist.cpf2.toFixed(2)} 
+                      <span style="color: #10b981; font-weight: 600;">(${artist.cpfChange.toFixed(2)})</span>
+                    </div>
+                  </div>
+                `;
+              });
+              html += '</div></div>';
+            }
+            
+            if (deteriorations.length > 0) {
+              html += `
+                <div style="background: rgba(239, 68, 68, 0.05); border: 2px solid rgba(239, 68, 68, 0.3); border-radius: 12px; padding: 1.5rem;">
+                  <h4 style="color: #ef4444; margin-bottom: 1rem;">⚠️ Requieren Atención</h4>
+                  <div style="display: grid; gap: 0.75rem;">
+              `;
+              deteriorations.forEach(artist => {
+                html += `
+                  <div style="background: rgba(255,255,255,0.02); border-radius: 8px; padding: 0.75rem;">
+                    <div style="font-weight: 600; margin-bottom: 0.25rem;">${artist.artist}</div>
+                    <div style="font-size: 0.9rem; color: var(--gray-300);">
+                      CPF: €${artist.cpf1.toFixed(2)} → €${artist.cpf2.toFixed(2)} 
+                      <span style="color: #ef4444; font-weight: 600;">(+${artist.cpfChange.toFixed(2)})</span>
+                    </div>
+                  </div>
+                `;
+              });
+              html += '</div></div>';
+            }
+            
+            html += '</div>';
+          }
+          
+          html += '</div>';
+          
+          document.getElementById('comparisonResults').innerHTML = html;
+          App.hideLoading();
+          App.showAlert('success', '✅ Comparación generada correctamente');
+          
+        } catch (error) {
+          console.error('Error generando comparación:', error);
+          App.hideLoading();
+          App.showAlert('danger', 'Error generando comparación: ' + error.message);
+        }
+      });
+    }
+    
+    document.addEventListener('DOMContentLoaded', () => {
+      renderArtistsList();
+      populateArtistSelector();
+      renderTrackboostConfig();
+    });
+  </script>
+</body>
+</html>
