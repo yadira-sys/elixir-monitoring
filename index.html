@@ -48,6 +48,7 @@
       <button class="tab-btn" data-tab="reports">📄 Reportes</button>
       <button class="tab-btn" data-tab="artists">🎤 Artistas</button>
       <button class="tab-btn" data-tab="snapshots">📸 Snapshots</button>
+      <button class="tab-btn" data-tab="trackboost-manager">💎 TrackBoost</button>
     </nav>
 
     <!-- Tab: Dashboard -->
@@ -720,6 +721,117 @@
     <h3 style="margin-top: 2rem; margin-bottom: 1rem;">📊 Últimos Snapshots Guardados</h3>
     <div id="snapshotsList" style="max-height: 600px; overflow-y: auto;">
       <p style="color: #9ca3af;">Cargando snapshots...</p>
+    </div>
+  </div>
+</div>
+
+<!-- TrackBoost Manager Tab -->
+<div class="tab-content" data-tab="trackboost-manager">
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">💎 Gestión de TrackBoost</h2>
+      <p style="color: var(--gray-400); margin-top: 0.5rem;">
+        Administra tus campañas TrackBoost de forma independiente a los artistas de playlist
+      </p>
+    </div>
+    
+    <!-- Sección 1: Agregar Nuevo TrackBoost -->
+    <div style="padding: 2rem; border-bottom: 1px solid var(--border-color);">
+      <h3 style="color: var(--primary); margin-bottom: 1.5rem;">
+        ➕ Agregar Nuevo TrackBoost
+      </h3>
+      
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+        <div>
+          <label style="display: block; color: var(--gray-300); font-weight: 600; margin-bottom: 0.5rem;">
+            🎤 Nombre del Artista
+          </label>
+          <input 
+            type="text" 
+            id="tbArtistName" 
+            placeholder="Ej: Steban"
+            style="width: 100%; padding: 0.8rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color);"
+          />
+        </div>
+        
+        <div>
+          <label style="display: block; color: var(--gray-300); font-weight: 600; margin-bottom: 0.5rem;">
+            🎵 Nombre del Track
+          </label>
+          <input 
+            type="text" 
+            id="tbTrackName" 
+            placeholder="Ej: Luz"
+            style="width: 100%; padding: 0.8rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color);"
+          />
+        </div>
+        
+        <div>
+          <label style="display: block; color: var(--gray-300); font-weight: 600; margin-bottom: 0.5rem;">
+            🔗 URL Spotify del Track
+          </label>
+          <input 
+            type="url" 
+            id="tbTrackUrl" 
+            placeholder="https://open.spotify.com/track/..."
+            style="width: 100%; padding: 0.8rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color);"
+          />
+        </div>
+        
+        <div>
+          <label style="display: block; color: var(--gray-300); font-weight: 600; margin-bottom: 0.5rem;">
+            🔑 Palabra Clave (para detectar en CSV)
+          </label>
+          <input 
+            type="text" 
+            id="tbKeyword" 
+            placeholder="Ej: trckbst steban luz"
+            style="width: 100%; padding: 0.8rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color);"
+          />
+          <small style="color: var(--gray-500); font-size: 0.85rem;">
+            Esta palabra debe estar en el nombre de la campaña en Meta Ads
+          </small>
+        </div>
+        
+        <div>
+          <label style="display: block; color: var(--gray-300); font-weight: 600; margin-bottom: 0.5rem;">
+            💰 Presupuesto Total
+          </label>
+          <div style="display: flex; gap: 1rem;">
+            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+              <input type="radio" name="tbBudgetType" value="200" checked />
+              <span>€200 Lite</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+              <input type="radio" name="tbBudgetType" value="500" />
+              <span>€500 Normal</span>
+            </label>
+          </div>
+        </div>
+      </div>
+      
+      <div style="margin-top: 1.5rem;">
+        <button 
+          onclick="App.addNewTrackBoost()" 
+          class="btn-primary"
+          style="padding: 0.8rem 2rem; font-size: 1rem;"
+        >
+          💾 Guardar TrackBoost
+        </button>
+      </div>
+    </div>
+    
+    <!-- Sección 2: Lista de TrackBoost Existentes -->
+    <div style="padding: 2rem;">
+      <h3 style="color: var(--primary); margin-bottom: 1.5rem;">
+        📊 TrackBoost Activos
+      </h3>
+      
+      <div id="trackboostList">
+        <p style="color: var(--gray-400); text-align: center; padding: 2rem;">
+          Cargando...
+        </p>
+      </div>
     </div>
   </div>
 </div>

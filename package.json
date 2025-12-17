@@ -1,0 +1,19 @@
+{
+  "name": "elixir-monitoring-dashboard",
+  "version": "5.3.0",
+  "description": "ELIXIR Marketing Dashboard - Sistema de análisis de campañas musicales",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve -s . -l ${PORT:-3000}"
+  },
+  "keywords": ["dashboard", "marketing", "music", "analytics"],
+  "author": "ELIXIR Marketing",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yadira-sys/elixir-monitoring"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

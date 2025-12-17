@@ -89,8 +89,14 @@ const App = {
     
     // Actualizar contenido
     document.querySelectorAll('.tab-content').forEach(content => {
-      content.classList.toggle('active', content.id === `${tabName}Tab`);
+      const shouldBeActive = content.dataset.tab === tabName || content.id === `${tabName}Tab`;
+      content.classList.toggle('active', shouldBeActive);
     });
+    
+    // Cargar contenido específico de la pestaña
+    if (tabName === 'trackboost-manager') {
+      this.loadTrackBoostList();
+    }
   },
 
   // Manejar carga de archivo CSV
@@ -2004,6 +2010,292 @@ const App = {
           `• Sistema de persistencia`);
     
     this.showSnapshotsVisual();
+  },
+  
+  // ==========================================
+  // GESTIÓN DE TRACKBOOST
+  // ==========================================
+  
+  // Agregar nuevo TrackBoost
+  addNewTrackBoost() {
+    const artistName = document.getElementById('tbArtistName').value.trim();
+    const trackName = document.getElementById('tbTrackName').value.trim();
+    const trackUrl = document.getElementById('tbTrackUrl').value.trim();
+    const keyword = document.getElementById('tbKeyword').value.trim();
+    const budgetType = document.querySelector('input[name="tbBudgetType"]:checked').value;
+    
+    // Validaciones
+    if (!artistName || !trackName || !trackUrl || !keyword) {
+      this.showAlert('warning', 'Completa todos los campos obligatorios');
+      return;
+    }
+    
+    // Validar URL de Spotify
+    if (!trackUrl.includes('spotify.com/track/')) {
+      this.showAlert('warning', 'La URL debe ser de un track de Spotify');
+      return;
+    }
+    
+    // Extraer track ID de la URL
+    const trackId = trackUrl.split('/track/')[1].split('?')[0];
+    
+    // Nombre completo del TrackBoost
+    const fullName = `${artistName} (TRCKBST ${trackName})`;
+    
+    // Crear configuración
+    const trackBoostConfig = {
+      name: fullName,
+      artistName: artistName,
+      trackName: trackName,
+      trackId: trackId,
+      trackUrl: trackUrl,
+      keyword: keyword.toLowerCase(),
+      budgetTotal: parseInt(budgetType),
+      budgetType: budgetType === '200' ? 'lite' : 'normal',
+      currentSaves: 0,
+      lastSaves: 0,
+      streams: 0,
+      baselineDate: new Date().toISOString().split('T')[0],
+      createdAt: new Date().toISOString(),
+      active: true
+    };
+    
+    // Guardar en localStorage
+    let trackBoosts = JSON.parse(localStorage.getItem('trackboosts') || '[]');
+    
+    // Verificar que no exista ya
+    if (trackBoosts.find(tb => tb.name === fullName)) {
+      this.showAlert('warning', `El TrackBoost "${fullName}" ya existe`);
+      return;
+    }
+    
+    trackBoosts.push(trackBoostConfig);
+    localStorage.setItem('trackboosts', JSON.stringify(trackBoosts));
+    
+    // Actualizar CONFIG en memoria
+    if (!CONFIG.trackboosts) {
+      CONFIG.trackboosts = [];
+    }
+    CONFIG.trackboosts.push(trackBoostConfig);
+    
+    // Actualizar HistoricalData
+    HistoricalData.trackboostTracks[fullName] = {
+      trackId: trackId,
+      trackUrl: trackUrl,
+      trackName: trackName,
+      baselineSaves: 0,
+      currentSaves: 0,
+      lastSaves: 0,
+      streams: 0,
+      baselineDate: trackBoostConfig.baselineDate,
+      gastoTotalCampana: 0
+    };
+    
+    // Limpiar formulario
+    document.getElementById('tbArtistName').value = '';
+    document.getElementById('tbTrackName').value = '';
+    document.getElementById('tbTrackUrl').value = '';
+    document.getElementById('tbKeyword').value = '';
+    
+    // Recargar lista
+    this.loadTrackBoostList();
+    
+    this.showAlert('success', `✅ TrackBoost "${fullName}" agregado correctamente`);
+  },
+  
+  // Cargar lista de TrackBoost
+  loadTrackBoostList() {
+    const container = document.getElementById('trackboostList');
+    if (!container) return;
+    
+    // Cargar desde localStorage
+    let trackBoosts = JSON.parse(localStorage.getItem('trackboosts') || '[]');
+    
+    // Si está vacío, cargar los que ya existen en HistoricalData
+    if (trackBoosts.length === 0) {
+      Object.keys(HistoricalData.trackboostTracks).forEach(name => {
+        const tb = HistoricalData.trackboostTracks[name];
+        trackBoosts.push({
+          name: name,
+          trackName: tb.trackName,
+          trackUrl: tb.trackUrl,
+          currentSaves: tb.currentSaves || 0,
+          lastSaves: tb.lastSaves || 0,
+          streams: tb.streams || 0,
+          budgetTotal: 500,
+          active: true
+        });
+      });
+      localStorage.setItem('trackboosts', JSON.stringify(trackBoosts));
+    }
+    
+    if (trackBoosts.length === 0) {
+      container.innerHTML = `
+        <p style="color: var(--gray-400); text-align: center; padding: 2rem;">
+          No hay TrackBoost configurados. Agrega uno usando el formulario de arriba.
+        </p>
+      `;
+      return;
+    }
+    
+    let html = '';
+    
+    trackBoosts.forEach((tb, index) => {
+      if (!tb.active) return;
+      
+      const savesGanados = (tb.currentSaves || 0) - (tb.lastSaves || 0);
+      const lastUpdate = tb.lastUpdate ? new Date(tb.lastUpdate).toLocaleDateString('es-ES') : 'Nunca';
+      
+      html += `
+        <div class="card" style="margin-bottom: 1.5rem; background: linear-gradient(135deg, rgba(139, 92, 246, 0.05) 0%, rgba(139, 92, 246, 0.02) 100%);">
+          <div style="padding: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+              <div>
+                <h4 style="color: var(--primary); margin-bottom: 0.5rem;">${tb.name}</h4>
+                <a href="${tb.trackUrl}" target="_blank" style="color: var(--success); font-size: 0.9rem;">
+                  🔗 Abrir en Spotify
+                </a>
+              </div>
+              <div style="text-align: right;">
+                <span style="background: rgba(139, 92, 246, 0.2); color: var(--primary); padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.85rem;">
+                  €${tb.budgetTotal || 500}
+                </span>
+              </div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+              <div>
+                <label style="display: block; color: var(--gray-400); font-size: 0.85rem; margin-bottom: 0.3rem;">
+                  💾 Saves Actuales
+                </label>
+                <input 
+                  type="number" 
+                  id="tb_current_${index}" 
+                  value="${tb.currentSaves || 0}"
+                  style="width: 100%; padding: 0.5rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-color);"
+                />
+              </div>
+              
+              <div>
+                <label style="display: block; color: var(--gray-400); font-size: 0.85rem; margin-bottom: 0.3rem;">
+                  ⏮️ Saves Corte Anterior
+                </label>
+                <input 
+                  type="number" 
+                  id="tb_last_${index}" 
+                  value="${tb.lastSaves || 0}"
+                  style="width: 100%; padding: 0.5rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-color);"
+                />
+              </div>
+              
+              <div>
+                <label style="display: block; color: var(--gray-400); font-size: 0.85rem; margin-bottom: 0.3rem;">
+                  🎵 Streams
+                </label>
+                <input 
+                  type="number" 
+                  id="tb_streams_${index}" 
+                  value="${tb.streams || 0}"
+                  style="width: 100%; padding: 0.5rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-color);"
+                />
+              </div>
+              
+              <div>
+                <label style="display: block; color: var(--gray-400); font-size: 0.85rem; margin-bottom: 0.3rem;">
+                  📊 Saves Ganados
+                </label>
+                <div style="padding: 0.5rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 6px; color: var(--success); font-weight: 600;">
+                  +${savesGanados}
+                </div>
+              </div>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <small style="color: var(--gray-500);">
+                Última actualización: ${lastUpdate}
+              </small>
+              <div style="display: flex; gap: 0.5rem;">
+                <button 
+                  onclick="App.updateTrackBoostData(${index})" 
+                  class="btn-primary"
+                  style="padding: 0.5rem 1rem; font-size: 0.9rem;"
+                >
+                  💾 Actualizar
+                </button>
+                <button 
+                  onclick="App.deleteTrackBoost(${index})" 
+                  class="btn-secondary"
+                  style="padding: 0.5rem 1rem; font-size: 0.9rem; background: rgba(239, 68, 68, 0.1); color: #ef4444;"
+                >
+                  🗑️ Eliminar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+    
+    container.innerHTML = html;
+  },
+  
+  // Actualizar datos de un TrackBoost
+  updateTrackBoostData(index) {
+    const currentSaves = parseInt(document.getElementById(`tb_current_${index}`).value) || 0;
+    const lastSaves = parseInt(document.getElementById(`tb_last_${index}`).value) || 0;
+    const streams = parseInt(document.getElementById(`tb_streams_${index}`).value) || 0;
+    
+    let trackBoosts = JSON.parse(localStorage.getItem('trackboosts') || '[]');
+    
+    if (!trackBoosts[index]) {
+      this.showAlert('danger', 'Error: TrackBoost no encontrado');
+      return;
+    }
+    
+    // Actualizar datos
+    trackBoosts[index].currentSaves = currentSaves;
+    trackBoosts[index].lastSaves = lastSaves;
+    trackBoosts[index].streams = streams;
+    trackBoosts[index].lastUpdate = new Date().toISOString();
+    
+    // Guardar
+    localStorage.setItem('trackboosts', JSON.stringify(trackBoosts));
+    
+    // Actualizar en HistoricalData también
+    const name = trackBoosts[index].name;
+    if (HistoricalData.trackboostTracks[name]) {
+      HistoricalData.trackboostTracks[name].currentSaves = currentSaves;
+      HistoricalData.trackboostTracks[name].lastSaves = lastSaves;
+      HistoricalData.trackboostTracks[name].streams = streams;
+    }
+    
+    // Recargar lista
+    this.loadTrackBoostList();
+    
+    const savesGanados = currentSaves - lastSaves;
+    this.showAlert('success', `✅ ${name} actualizado\n📊 Saves ganados: +${savesGanados}`);
+  },
+  
+  // Eliminar TrackBoost
+  deleteTrackBoost(index) {
+    let trackBoosts = JSON.parse(localStorage.getItem('trackboosts') || '[]');
+    
+    if (!trackBoosts[index]) return;
+    
+    const name = trackBoosts[index].name;
+    
+    if (!confirm(`¿Eliminar "${name}"?\n\nEsto no se puede deshacer.`)) {
+      return;
+    }
+    
+    // Marcar como inactivo en lugar de eliminar
+    trackBoosts[index].active = false;
+    localStorage.setItem('trackboosts', JSON.stringify(trackBoosts));
+    
+    // Recargar lista
+    this.loadTrackBoostList();
+    
+    this.showAlert('success', `🗑️ ${name} eliminado`);
   }
 };
 
