@@ -2105,16 +2105,27 @@ const App = {
   
   // Cargar lista de TrackBoost
   loadTrackBoostList() {
+    console.log('🔄 Cargando TrackBoost list...');
     const container = document.getElementById('trackboostList');
-    if (!container) return;
+    if (!container) {
+      console.error('❌ Container trackboostList no encontrado');
+      return;
+    }
+    
+    console.log('✅ Container encontrado');
     
     // Cargar desde localStorage
     let trackBoosts = JSON.parse(localStorage.getItem('trackboosts') || '[]');
+    console.log('📦 TrackBoosts en localStorage:', trackBoosts.length);
     
     // Si está vacío, cargar los que ya existen en HistoricalData
     if (trackBoosts.length === 0) {
-      Object.keys(HistoricalData.trackboostTracks).forEach(name => {
+      console.log('💾 Cargando desde HistoricalData...');
+      console.log('📊 HistoricalData.trackboostTracks:', HistoricalData.trackboostTracks);
+      
+      Object.keys(HistoricalData.trackboostTracks || {}).forEach(name => {
         const tb = HistoricalData.trackboostTracks[name];
+        console.log(`  - ${name}:`, tb);
         trackBoosts.push({
           name: name,
           trackName: tb.trackName,
@@ -2122,18 +2133,29 @@ const App = {
           currentSaves: tb.currentSaves || 0,
           lastSaves: tb.lastSaves || 0,
           streams: tb.streams || 0,
-          budgetTotal: 500,
+          budgetTotal: tb.gastoTotalCampana || 500,
           active: true
         });
       });
-      localStorage.setItem('trackboosts', JSON.stringify(trackBoosts));
+      
+      if (trackBoosts.length > 0) {
+        localStorage.setItem('trackboosts', JSON.stringify(trackBoosts));
+        console.log(`✅ Guardados ${trackBoosts.length} TrackBoost en localStorage`);
+      }
     }
+    
+    console.log('📋 Total TrackBoosts a mostrar:', trackBoosts.length);
     
     if (trackBoosts.length === 0) {
       container.innerHTML = `
-        <p style="color: var(--gray-400); text-align: center; padding: 2rem;">
-          No hay TrackBoost configurados. Agrega uno usando el formulario de arriba.
-        </p>
+        <div style="text-align: center; padding: 3rem;">
+          <p style="color: var(--gray-400); font-size: 1.1rem; margin-bottom: 1rem;">
+            📭 No hay TrackBoost configurados
+          </p>
+          <p style="color: var(--gray-500); font-size: 0.95rem;">
+            Usa el formulario de arriba para agregar tu primer TrackBoost
+          </p>
+        </div>
       `;
       return;
     }

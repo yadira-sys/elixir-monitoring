@@ -89,28 +89,26 @@ const HistoricalData = {
   // Tracks TrackBoost (configuración manual)
   trackboostTracks: {
     'PATO PESCIO (TRCKBST Minotaur)': {
-      trackId: '',
-      trackUrl: '',
+      trackId: '7xxxxxx',
+      trackUrl: 'https://open.spotify.com/track/7xxxxxx',
       trackName: 'Minotaur',
-      baselineSaves: 0,
-      currentSaves: 0,     // MANUAL - Saves actuales
-      lastSaves: 0,        // MANUAL - Saves del corte anterior (para calcular Coste/Save)
-      streams: 0,          // MANUAL
+      baselineSaves: 120,
+      currentSaves: 254,     // MANUAL - Saves actuales (ACTUALIZAR CADA SEMANA)
+      lastSaves: 180,        // MANUAL - Saves del corte anterior
+      streams: 12450,        // MANUAL - Streams actuales (ACTUALIZAR CADA SEMANA)
       baselineDate: '2025-10-31',
-      // NUEVOS CAMPOS PUNTO B
-      gastoTotalCampana: 0    // MANUAL - Gasto total desde inicio
+      gastoTotalCampana: 260.04    // MANUAL - Gasto total desde inicio
     },
     'Steban (TRCKBST Luz)': {
-      trackId: '',
-      trackUrl: '',
+      trackId: '6xxxxxx',
+      trackUrl: 'https://open.spotify.com/track/6xxxxxx',
       trackName: 'Luz',
-      baselineSaves: 0,
-      currentSaves: 0,     // MANUAL - Saves actuales
-      lastSaves: 0,        // MANUAL - Saves del corte anterior (para calcular Coste/Save)
-      streams: 0,          // MANUAL
+      baselineSaves: 85,
+      currentSaves: 198,     // MANUAL - Saves actuales (ACTUALIZAR CADA SEMANA)
+      lastSaves: 142,        // MANUAL - Saves del corte anterior
+      streams: 8920,         // MANUAL - Streams actuales (ACTUALIZAR CADA SEMANA)
       baselineDate: '2025-10-31',
-      // NUEVOS CAMPOS PUNTO B
-      gastoTotalCampana: 0    // MANUAL - Gasto total desde inicio
+      gastoTotalCampana: 185.50    // MANUAL - Gasto total desde inicio
     }
   },
 
