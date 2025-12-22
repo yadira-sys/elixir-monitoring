@@ -449,144 +449,41 @@
         </div>
       </div>
 
-      <!-- Configuración TrackBoost -->
-      <div class="card mt-3" style="border: 2px solid #f59e0b;">
-        <div class="card-header" style="background: rgba(245, 158, 11, 0.1);">
-          <h3 class="card-title">⚙️ Configurar Tracks TrackBoost</h3>
-        </div>
-        <div style="padding: 2rem;">
-          <p style="color: var(--gray-300); margin-bottom: 1.5rem;">
-            Para obtener saves y popularidad, añade el Track ID de Spotify:
-          </p>
-          
-          <div id="trackboostConfig">
-            <!-- PATO TRCKBST -->
-            <div class="card" style="margin-bottom: 1rem; background: rgba(245, 158, 11, 0.05); padding: 1.5rem;">
-              <h4 style="color: #f59e0b; margin-bottom: 1rem;">PATO PESCIO (TRCKBST Minotaur)</h4>
-              <div class="form-group">
-                <label class="form-label">Track URL Spotify</label>
-                <input type="text" id="trackUrl_pato" class="form-input" 
-                       placeholder="https://open.spotify.com/track/...">
-                <small style="color: var(--gray-300); font-size: 0.85rem; display: block; margin-top: 0.5rem;">
-                  El Track ID se extrae automáticamente de la URL
-                </small>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Nombre del Track</label>
-                <input type="text" id="trackName_pato" class="form-input" value="Minotaur">
-              </div>
-              <div class="form-group">
-                <label class="form-label">💰 Tipo de Presupuesto</label>
-                <select id="budgetType_pato" class="form-input" style="width: auto;">
-                  <option value="lite" selected>Lite (€200)</option>
-                  <option value="normal">Normal (€500)</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">💾 Saves Actuales (Manual)</label>
-                <input type="number" id="currentSaves_pato" class="form-input" placeholder="0">
-                <small style="color: var(--gray-300); font-size: 0.85rem; display: block; margin-top: 0.5rem;">
-                  Introduce el número de saves actual del track
-                </small>
-              </div>
-              <div class="form-group">
-                <label class="form-label">📺 Streams (Manual)</label>
-                <input type="number" id="streams_pato" class="form-input" placeholder="0">
-                <small style="color: var(--gray-300); font-size: 0.85rem; display: block; margin-top: 0.5rem;">
-                  Introduce el número de streams del track
-                </small>
-              </div>
-              <!-- NUEVOS CAMPOS PUNTO B -->
-              <div class="form-group">
-                <label class="form-label">💰 Gasto Total Campaña (Manual)</label>
-                <input type="number" id="gastoTotal_pato" class="form-input" placeholder="0" step="0.01">
-                <small style="color: var(--gray-300); font-size: 0.85rem; display: block; margin-top: 0.5rem;">
-                  Gasto total acumulado desde inicio de campaña (€)
-                </small>
-              </div>
-              <div class="form-group">
-                <label class="form-label">📈 Saves Corte Anterior (Manual)</label>
-                <input type="number" id="lastSaves_pato" class="form-input" placeholder="0">
-                <small style="color: var(--gray-300); font-size: 0.85rem; display: block; margin-top: 0.5rem;">
-                  Saves del reporte anterior - Se usa para calcular: (Saves Actuales - Saves Anterior)
-                </small>
-              </div>
-              <button class="btn btn-secondary" onclick="saveTrackConfig('pato', 'PATO PESCIO (TRCKBST Minotaur)')">
-                💾 Guardar Track
-              </button>
-              <div id="trackStatus_pato" style="margin-top: 1rem;"></div>
-            </div>
-            
-            <!-- STBAN TRCKBST -->
-            <div class="card" style="margin-bottom: 1rem; background: rgba(245, 158, 11, 0.05); padding: 1.5rem;">
-              <h4 style="color: #f59e0b; margin-bottom: 1rem;">Steban (TRCKBST Luz)</h4>
-              <div class="form-group">
-                <label class="form-label">Track URL Spotify</label>
-                <input type="text" id="trackUrl_stban" class="form-input" 
-                       placeholder="https://open.spotify.com/track/...">
-                <small style="color: var(--gray-300); font-size: 0.85rem; display: block; margin-top: 0.5rem;">
-                  El Track ID se extrae automáticamente de la URL
-                </small>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Nombre del Track</label>
-                <input type="text" id="trackName_stban" class="form-input" value="Luz">
-              </div>
-              <div class="form-group">
-                <label class="form-label">💰 Tipo de Presupuesto</label>
-                <select id="budgetType_stban" class="form-input" style="width: auto;">
-                  <option value="lite">Lite (€200)</option>
-                  <option value="normal" selected>Normal (€500)</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">💾 Saves Actuales (Manual)</label>
-                <input type="number" id="currentSaves_stban" class="form-input" placeholder="0">
-                <small style="color: var(--gray-300); font-size: 0.85rem; display: block; margin-top: 0.5rem;">
-                  Introduce el número de saves actual del track
-                </small>
-              </div>
-              <div class="form-group">
-                <label class="form-label">📺 Streams (Manual)</label>
-                <input type="number" id="streams_stban" class="form-input" placeholder="0">
-                <small style="color: var(--gray-300); font-size: 0.85rem; display: block; margin-top: 0.5rem;">
-                  Introduce el número de streams del track
-                </small>
-              </div>
-              <!-- NUEVOS CAMPOS PUNTO B -->
-              <div class="form-group">
-                <label class="form-label">💰 Gasto Total Campaña (Manual)</label>
-                <input type="number" id="gastoTotal_stban" class="form-input" placeholder="0" step="0.01">
-                <small style="color: var(--gray-300); font-size: 0.85rem; display: block; margin-top: 0.5rem;">
-                  Gasto total acumulado desde inicio de campaña (€)
-                </small>
-              </div>
-              <div class="form-group">
-                <label class="form-label">📈 Saves Corte Anterior (Manual)</label>
-                <input type="number" id="lastSaves_stban" class="form-input" placeholder="0">
-                <small style="color: var(--gray-300); font-size: 0.85rem; display: block; margin-top: 0.5rem;">
-                  Saves del reporte anterior - Se usa para calcular: (Saves Actuales - Saves Anterior)
-                </small>
-              </div>
-              <button class="btn btn-secondary" onclick="saveTrackConfig('stban', 'Steban (TRCKBST Luz)')">
-                💾 Guardar Track
-              </button>
-              <div id="trackStatus_stban" style="margin-top: 1rem;"></div>
-            </div>
-          </div>
-          
-          <button class="btn btn-primary" style="margin-top: 1rem;" onclick="App.updateTrackboostData()">
-            🔄 Actualizar Datos TrackBoost
-          </button>
-        </div>
-      </div>
-      
       <!-- Report TrackBoost -->
       <div class="card mt-3" style="border: 2px solid #f59e0b;">
         <div class="card-header" style="background: rgba(245, 158, 11, 0.1);">
-          <h3 class="card-title">📄 Report TrackBoost</h3>
+          <h3 class="card-title">💎 Report TrackBoost</h3>
         </div>
         <div style="padding: 2rem;">
+          <p style="color: var(--gray-300); margin-bottom: 1.5rem;">
+            ℹ️ Para gestionar tus campañas TrackBoost (agregar, editar saves/streams), ve a la pestaña <strong>💎 TrackBoost</strong>
+          </p>
+          
+          <!-- Selector de Fechas -->
+          <div class="form-group">
+            <label class="form-label">Fecha Inicio</label>
+            <input type="date" id="trackboostReportStartDate" class="form-input" value="2025-11-17">
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Fecha Fin</label>
+            <input type="date" id="trackboostReportEndDate" class="form-input" value="2025-12-01">
+          </div>
+          
+          <!-- Selector de Snapshot para TrackBoost -->
+          <div style="margin: 1.5rem 0; padding: 1rem; background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px;">
+            <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+              <label style="color: var(--gray-300); font-weight: 600;">📅 Snapshot Base:</label>
+              <select id="trackboostSnapshotSelector" class="btn btn-secondary" style="padding: 0.3rem 0.8rem; min-width: 200px;">
+                <option value="31/10/2024">31 Octubre 2024 (baseline histórico)</option>
+                <option value="01/12/2025">01 Diciembre 2025 (estimado)</option>
+              </select>
+            </div>
+            <p style="margin-top: 0.5rem; color: var(--gray-400); font-size: 0.85rem;">
+              ℹ️ Punto base para calcular saves ganados en este report
+            </p>
+          </div>
+          
           <button class="btn btn-primary" onclick="App.generateTrackboostReport()">
             📊 Generar Report TrackBoost (HTML)
           </button>
@@ -1954,3 +1851,4 @@
   </script>
 </body>
 </html>
+
